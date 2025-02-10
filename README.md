@@ -5,6 +5,7 @@ OG Snake Game in C++ in which the player controls the snake which is moving acro
 - [Dependencies](#dependencies)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Features](#features)
 - [Conclusion](#conclusion)
 
 ## Dependencies
