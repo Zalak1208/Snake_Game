@@ -50,11 +50,11 @@ Map::Map(int width, int height)
 {
     this->width = width;
     this->height = height;
-    map = new int *[height]; // ✅ Correct allocation order
+    map = new int *[height]; 
     Food food(0, 0);
     for (int i = 0; i < height; i++)
     {
-        map[i] = new int[width](); // ✅ Initialize with zeros
+        map[i] = new int[width]();
     }
 }
 
@@ -95,7 +95,7 @@ void Map::draw(Snake &snake1)
 
 bool Map::is_there_snake(int i, int j)
 {
-    return map[i][j] == 1; // ✅ Simplified
+    return map[i][j] == 1; 
 }
 
 string Map::Snake_body(int i, int j, bool is_head)
@@ -112,7 +112,7 @@ void Map::update(Snake &snake1)
     int size = snake1.size;
     int **pos = snake1.pos;
 
-    // ✅ Clear the previous snake position
+    
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
@@ -125,7 +125,7 @@ void Map::update(Snake &snake1)
         map[food.get_x()][food.get_y()] = 2;
     }
 
-    // ✅ Update the map with the snake position
+    
     for (int i = 0; i < size; i++)
     {
         int x = pos[i][0]; // Row index
@@ -133,7 +133,7 @@ void Map::update(Snake &snake1)
 
         if (x >= 0 && x < height && y >= 0 && y < width)
         {
-            map[x][y] = 1; // ✅ Valid position
+            map[x][y] = 1; 
         }
         else
         {
@@ -202,10 +202,10 @@ bool Map::move_snake(Snake &snake1)
 
     if (_kbhit()) // Check if a key is pressed
     {
-        char c = _getch(); // Get the pressed key
-        if (c == -32)      // Special keys (arrow keys)
+        char c = _getch(); 
+        if (c == -32)      
         {
-            c = _getch(); // Get the actual arrow key code
+            c = _getch(); 
             switch (c)
             {
             case 72:                 // Up arrow
