@@ -46,7 +46,7 @@ Map::Map(int width, int height)
     Food food(0, 0);
     for (int i = 0; i < height; i++)
     {
-        map[i] = new int[width](); // ✅ Initialize with zeros
+        map[i] = new int[width](); 
     }
 }
 
@@ -86,7 +86,7 @@ void Map::draw(Snake &snake1)
 
 bool Map::is_there_snake(int i, int j)
 {
-    return map[i][j] == 1; // ✅ Simplified
+    return map[i][j] == 1; 
 }
 
 char Map::Snake_body(int i, int j)
@@ -224,7 +224,7 @@ void Map::run(Snake &snake1)
             generate_food();
         }
         
-        Sleep(100); // Increased to 100ms for smoother gameplay
+        Sleep(100); 
     }
 
     // After the game ends, display score
@@ -282,12 +282,12 @@ void Map::generate_food()
     int x, y;
     bool foodPlaced = false;
 
-    while (!foodPlaced)  // Instead of recursion, use loop
+    while (!foodPlaced)  
     {
         x = 1 + rand() % (height - 2);
         y = 1 + rand() % (width - 2);
 
-        if (map[x][y] == 0)  // Ensure food is placed in an empty cell
+        if (map[x][y] == 0)  
         {
             food.set_x(x);
             food.set_y(y);
