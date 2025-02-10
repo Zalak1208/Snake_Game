@@ -2,6 +2,7 @@
 #include <windows.h> 
 #include <conio.h>
 #include "intro.h"
+#include <iostream>
 
 using namespace std;
 
@@ -70,9 +71,9 @@ void show_intro() {
         setCursorPosition(textStartX, textStartY);
 
         if (i % 30 > 15) {
-            cout << intro_string1;
+            cout << "\033[36m"<< intro_string1 << "\033[0m";
         } else {
-            cout << intro_string2;
+            cout << "\033[36m"<< intro_string2 << "\033[0m";
         }
 
         if (_kbhit()) {  // Break if key is pressed
@@ -86,4 +87,29 @@ void show_intro() {
     
 }
 
-
+void instructions()
+{
+    cout << "\033[32m" << "Use the arrow keys or WASD keys to move the snake." << endl << "\033[0m";
+    cout << "\033[33m" << "Eat the food (@) to grow." << endl << "\033[0m";
+    cout << "\033[32m" << "Avoid hitting the walls or yourself." << endl << "\033[0m";
+    cout << "\033[33m" << "Press 'q' to quit." << endl << "\033[0m";
+    cout << "\033[32m" << "Press any other key to play again." << endl << "\033[0m";
+    Sleep(2000);
+    char ch = _getch();
+    //ch = _getch();
+    while(true)
+    {
+        if(_kbhit())
+        {
+            char ch = _getch();
+            if(ch == 'q')
+            {
+                exit(0);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+}

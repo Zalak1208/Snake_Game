@@ -2,5 +2,6 @@
 #define INTRO_H
 
 void show_intro();
+void instructions();
 
 #endif

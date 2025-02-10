@@ -1,16 +1,24 @@
 #include "map.h"
 #include "snake.h"
+#include "food.h"
 #include <iostream>
 #include <fstream>
 #include <windows.h>
 #include <conio.h>
-#include <queue>
-#include "food.h"
 using namespace std;
+
+void setCursorPosition1(int x, int y)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD position;
+    position.X = x;
+    position.Y = y;
+    SetConsoleCursorPosition(hConsole, position);
+}
 
 int getMaxScore(const string &filename)
 {
-    ifstream inputFile(filename);
+    std::ifstream inputFile(filename);
     int maxScore = 0;
 
     if (inputFile)
@@ -27,7 +35,7 @@ int getMaxScore(const string &filename)
 
 void updateMaxScore(const string &filename, int newScore)
 {
-    ofstream outputFile(filename);
+    std::ofstream outputFile(filename);
     if (outputFile)
     {
         outputFile << newScore;
@@ -42,16 +50,17 @@ Map::Map(int width, int height)
 {
     this->width = width;
     this->height = height;
-    map = new int *[height];
+    map = new int *[height]; // ✅ Correct allocation order
     Food food(0, 0);
     for (int i = 0; i < height; i++)
     {
-        map[i] = new int[width](); 
+        map[i] = new int[width](); // ✅ Initialize with zeros
     }
 }
 
 void Map::draw(Snake &snake1)
 {
+    setCursorPosition1(0, 0);
     string s = "";
     for (int i = 0; i < height; i++)
     {
@@ -59,19 +68,19 @@ void Map::draw(Snake &snake1)
         {
             if (j == 0 || j == width - 1)
             {
-                s += "#";
+                s += "\033[33m#\033[0m";
             }
             else if ((i == 0 || i == height - 1) && j % 2 == 0)
             {
-                s += "#";
+                s += "\033[33m#\033[0m";
             }
             else if (is_there_snake(i, j))
-            {
-                s += Snake_body(i, j);
+            {                
+                s += Snake_body(i, j, i == snake1.pos[0][0] && j == snake1.pos[0][1]);
             }
             else if (map[i][j] == 2)
             {
-                s += "F";
+                s += "\033[32m@\033[0m";
             }
             else
             {
@@ -81,22 +90,29 @@ void Map::draw(Snake &snake1)
         s += '\n';
     }
     cout << s << endl
-         << "Score: " << snake1.size * 10 << endl;
+         << "Score: " << snake1.size * 10 - 30 << endl;
 }
 
 bool Map::is_there_snake(int i, int j)
 {
-    return map[i][j] == 1; 
+    return map[i][j] == 1; // ✅ Simplified
 }
 
-char Map::Snake_body(int i, int j)
+string Map::Snake_body(int i, int j, bool is_head)
 {
-    return 'O';
+    if (is_head)
+    {       
+        return "\033[31m0\033[0m";
+    }
+    return "\033[35mO\033[0m";
 }
 
 void Map::update(Snake &snake1)
 {
-    // Clear the map
+    int size = snake1.size;
+    int **pos = snake1.pos;
+
+    // ✅ Clear the previous snake position
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
@@ -104,25 +120,20 @@ void Map::update(Snake &snake1)
             map[i][j] = 0;
         }
     }
-
-    // Place food on the map
-    if (food.get_x() >= 0 && food.get_y() >= 0)
+    if (food.get_x())
     {
         map[food.get_x()][food.get_y()] = 2;
     }
 
-    // Iterate over the snake's position queue
-    queue<pair<int, int>> tempPos = snake1.pos; // Copy the queue for iteration
-    while (!tempPos.empty())
+    // ✅ Update the map with the snake position
+    for (int i = 0; i < size; i++)
     {
-        pair<int, int> segment = tempPos.front();
-        tempPos.pop();
-        int x = segment.first;
-        int y = segment.second;
+        int x = pos[i][0]; // Row index
+        int y = pos[i][1]; // Column index
 
         if (x >= 0 && x < height && y >= 0 && y < width)
         {
-            map[x][y] = 1; // Mark snake's body on the map
+            map[x][y] = 1; // ✅ Valid position
         }
         else
         {
@@ -130,7 +141,6 @@ void Map::update(Snake &snake1)
         }
     }
 }
-
 
 void Map::print()
 {
@@ -146,68 +156,99 @@ void Map::print()
 
 bool Map::move_snake(Snake &snake1)
 {
-    pair<int, int> head = snake1.pos.back(); // Get last element (head)
-    int x = head.first;
-    int y = head.second;
-    int new_x = x, new_y = y;
-
-    // Handle input before moving
-    if (_kbhit())
+    int **pos = snake1.pos;
+    int size = snake1.size;
+    int x = pos[0][0];
+    int y = pos[0][1];
+    int dir = snake1.dir;
+    int new_x = x;
+    int new_y = y;
+    switch (dir)
     {
-        char c = _getch();
-        if (c == -32) { // Arrow keys
-            c = _getch();
-            switch (c)
-            {
-            case 72: if (snake1.dir != 1) snake1.dir = 3; break; // Up
-            case 80: if (snake1.dir != 3) snake1.dir = 1; break; // Down
-            case 75: if (snake1.dir != 0) snake1.dir = 2; break; // Left
-            case 77: if (snake1.dir != 2) snake1.dir = 0; break; // Right
-            }
-        }
-        else // WASD controls
-        {
-            switch (c)
-            {
-            case 'w': if (snake1.dir != 1) snake1.dir = 3; break;
-            case 's': if (snake1.dir != 3) snake1.dir = 1; break;
-            case 'a': if (snake1.dir != 0) snake1.dir = 2; break;
-            case 'd': if (snake1.dir != 2) snake1.dir = 0; break;
-            }
-        }
+    case 0:
+        new_y++;
+        break;
+    case 1:
+        new_x++;
+        break;
+    case 2:
+        new_y--;
+        break;
+    case 3:
+        new_x--;
+        break;
     }
 
-    // Determine new head position
-    switch (snake1.dir)
+    if (new_x < 1 || new_x >= height - 1 || new_y < 1 || new_y >= width - 1 || is_there_snake(new_x, new_y))
     {
-    case 0: new_y++; break; // Right
-    case 1: new_x++; break; // Down
-    case 2: new_y--; break; // Left
-    case 3: new_x--; break; // Up
+        return false;
     }
 
-    // Collision detection
-    if (new_x < 1 || new_x >= height - 1 || new_y < 1 || new_y >= width - 1 || snake1.will_there_be_snake(new_x, new_y))
+    for (int i = size - 1; i > 0; i--)
     {
-        return false; // Collision
+        pos[i][0] = pos[i - 1][0];
+        pos[i][1] = pos[i - 1][1];
     }
 
-    // Add new head position
-    snake1.pos.push_back({new_x, new_y});
-
-    // If food is found, grow snake; otherwise, remove tail
+    pos[0][0] = new_x;
+    pos[0][1] = new_y;
     if (map[new_x][new_y] == 2)
     {
         snake1.grow();
         is_there_food = false;
-        food.set_x(-1); 
-        food.set_y(-1);
-    }
-    else
-    {
-        snake1.pos.pop_front(); // Properly remove tail
+        food.set_x(0);
+        food.set_y(0);
     }
 
+    if (_kbhit()) // Check if a key is pressed
+    {
+        char c = _getch(); // Get the pressed key
+        if (c == -32)      // Special keys (arrow keys)
+        {
+            c = _getch(); // Get the actual arrow key code
+            switch (c)
+            {
+            case 72:                 // Up arrow
+                if (snake1.dir != 1) // Prevent reverse direction (down)
+                    snake1.dir = 3;  // Up
+                break;
+            case 80:                 // Down arrow
+                if (snake1.dir != 3) // Prevent reverse direction (up)
+                    snake1.dir = 1;  // Down
+                break;
+            case 75:                 // Left arrow
+                if (snake1.dir != 0) // Prevent reverse direction (right)
+                    snake1.dir = 2;  // Left
+                break;
+            case 77:                 // Right arrow
+                if (snake1.dir != 2) // Prevent reverse direction (left)
+                    snake1.dir = 0;  // Right
+                break;
+            }
+        }
+        else // WASD keys
+        {
+            switch (c)
+            {
+            case 'w':                // W key for up
+                if (snake1.dir != 1) // Prevent reverse direction (down)
+                    snake1.dir = 3;  // Up
+                break;
+            case 's':                // S key for down
+                if (snake1.dir != 3) // Prevent reverse direction (up)
+                    snake1.dir = 1;  // Down
+                break;
+            case 'a':                // A key for left
+                if (snake1.dir != 0) // Prevent reverse direction (right)
+                    snake1.dir = 2;  // Left
+                break;
+            case 'd':                // D key for right
+                if (snake1.dir != 2) // Prevent reverse direction (left)
+                    snake1.dir = 0;  // Right
+                break;
+            }
+        }
+    }
     return true;
 }
 
@@ -215,51 +256,47 @@ void Map::run(Snake &snake1)
 {
     while (move_snake(snake1))
     {
-        cout << "\033[2J\033[H";  // Clear screen
+        cout << "\033[2J\033[H";
         update(snake1);
         draw(snake1);
-        
         if (!is_there_food)
         {
             generate_food();
         }
-        
-        Sleep(100); 
+        Sleep(snake1.speed);
+        snake1.speed = max(20, 200 - snake1.size * 5);
     }
-
-    // After the game ends, display score
     int maxScore = getMaxScore("highscore.txt");
-    if (snake1.size * 10 > maxScore)
+    if (snake1.size * 10 - 30> maxScore)
     {
-        updateMaxScore("highscore.txt", snake1.size * 10);
-        maxScore = snake1.size * 10;
+        updateMaxScore("highscore.txt", snake1.size * 10 - 30);
+        maxScore = snake1.size * 10 - 30;
     }
-
     for (int i = 0; i < 100000; i++)
     {
-        cout << "\033[2J\033[H";  // Clear screen
-        cout << R"(
+        string Game_over = R"(
   ______                                            ______                                
  /      \                                          /      \
 /$$$$$$  |  ______   _____  ____    ______        /$$$$$$  | __     __  ______    ______
 $$ | _$$/  /      \ /     \/    \  /      \       $$ |  $$ |/  \   /  |/      \  /      \
 $$ |/    | $$$$$$  |$$$$$$ $$$$  |/$$$$$$  |      $$ |  $$ |$$  \ /$$//$$$$$$  |/$$$$$$  |
-$$ |$$$$ | /    $$ |$$ | $$ | $$ |$$    $$ |      $$ |  $$ | $$  /$$/ $$    $$ |$$ |  $$/ 
-$$ \__$$ |/$$$$$$$ |$$ | $$ | $$ |$$$$$$$$/       $$ \__$$ |  $$ $$/  $$$$$$$$/ $$ |      
-$$    $$/ $$    $$ |$$ | $$ | $$ |$$       |      $$    $$/    $$$/   $$       |$$ |      
- $$$$$$/   $$$$$$$/ $$/  $$/  $$/  $$$$$$$/        $$$$$$/      $/     $$$$$$$/ $$/       
-)" << endl;
-
-        cout << "Your score: " << snake1.size * 10 << endl;
-        cout << "Max score: " << maxScore << endl;
-
+$$ |$$$$ | /    $$ |$$ | $$ | $$ |$$    $$ |      $$ |  $$ | $$  /$$/ $$    $$ |$$ |  $$/
+$$ \__$$ |/$$$$$$$ |$$ | $$ | $$ |$$$$$$$$/       $$ \__$$ |  $$ $$/  $$$$$$$$/ $$ |
+$$    $$/ $$    $$ |$$ | $$ | $$ |$$       |      $$    $$/    $$$/   $$       |$$ |
+ $$$$$$/   $$$$$$$/ $$/  $$/  $$/  $$$$$$$/        $$$$$$/      $/     $$$$$$$/ $$/
+)";
+        string text = "\033[31m" + Game_over + "\033[34m" + "\nYour score is " + to_string(snake1.size * 10 - 30) + "\nMax score is " + to_string(maxScore) + "\033[0m";
+        cout << "\033[2J\033[H";
+        cout << text << endl;
+        // cout << "Your score is " << snake1.size*10 << endl;
+        // cout << "Max score is " << maxScore << endl;
         if (i % 30 > 15)
         {
-            cout << "Press 'q' to quit" << endl;
-            cout << "Press any other key to play again" << endl;
-        }
 
-        if (_kbhit())
+            cout << "\033[32m" << "Press q to quit" << endl;
+            cout << "Press any other key to play again" << endl << "\033[0m";
+        }
+        if (_kbhit() )
         {
             char ch = _getch();
             if (ch == 'q')
@@ -271,29 +308,23 @@ $$    $$/ $$    $$ |$$ | $$ | $$ |$$       |      $$    $$/    $$$/   $$       |
                 break;
             }
         }
-
         Sleep(1);
     }
 }
 
-
 void Map::generate_food()
 {
-    int x, y;
-    bool foodPlaced = false;
-
-    while (!foodPlaced)  
+    int x = 1 + rand() % (height - 2);
+    int y = 1 + rand() % (width - 2);
+    if (map[x][y] == 0)
     {
-        x = 1 + rand() % (height - 2);
-        y = 1 + rand() % (width - 2);
-
-        if (map[x][y] == 0)  
-        {
-            food.set_x(x);
-            food.set_y(y);
-            is_there_food = true;
-            cout << "Food generated at " << x << ", " << y << endl;
-            foodPlaced = true;
-        }
+        food.set_x(x);
+        food.set_y(y);
+        is_there_food = true;
+        cout << "Food generated at " << x << " " << y << endl;
+    }
+    else
+    {
+        generate_food();
     }
 }
