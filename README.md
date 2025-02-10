@@ -24,5 +24,14 @@ The following are the systems requirements:
 ## Usage
 Just run a.exe file.
 
+## Features 
+1) The game is played on a fixed-size grid, containing walls (boundaries), the snake, and the food.
+2) The snake moves automatically in one direction until the player changes it.The snake can move left, right, up, or down, but it cannot move backward (e.g., if moving right, it cannot go left immediately).
+3) The food is generated randomly on the grid, when the snake eats the food, its length increases by one segment. The new food is generated on a random location after being consumed. Each food item increases the player's score.
+4) The game ends if the snake collides with the wall and with itself (its body).
+5) The snake’s speed increases as it grows, making it harder to control.
+6) High Score is stored and displayed after each loss. It is saved even after game is closed.
+
+
 ## Conclusion
 The project is done with the concept of classes. There could more updates in the future based on the liking by the public.
